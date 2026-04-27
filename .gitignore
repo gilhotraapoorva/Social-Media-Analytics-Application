@@ -6,6 +6,7 @@ __pycache__/
 .eggs/
 *.egg
 .venv/
+.venv311/
 venv/
 env/
 .python-version

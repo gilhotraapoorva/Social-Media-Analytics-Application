@@ -20,7 +20,10 @@ def content_based_recommendations(posts: List, target_post_id: int, top_k: int =
     target_idx = ids.index(target_post_id)
 
     vec = TfidfVectorizer(stop_words="english", max_features=2000)
-    matrix = vec.fit_transform(texts)
+    try:
+        matrix = vec.fit_transform(texts)
+    except ValueError:
+        return []
     sim = cosine_similarity(matrix[target_idx:target_idx + 1], matrix).flatten()
 
     ranked = sorted(

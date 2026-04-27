@@ -227,9 +227,14 @@ def register_routes(app: Flask) -> None:
             except ValueError:
                 limit = 100
             raw = data_collector.collect_posts(keyword, case.platform, limit=limit)
-            _persist_collected_posts(case, raw)
-
-            flash(f"Case '{case.name}' created with {len(raw)} posts collected.", "success")
+            if raw:
+                _persist_collected_posts(case, raw)
+                flash(f"Case '{case.name}' created with {len(raw)} posts collected.", "success")
+            else:
+                flash(
+                    f"Case '{case.name}' created, but no live posts were returned.",
+                    "warning",
+                )
             return redirect(url_for("dashboard", case_id=case.id))
         return render_template("new_case.html")
 
@@ -251,8 +256,11 @@ def register_routes(app: Flask) -> None:
         except ValueError:
             limit = 100
         raw = data_collector.collect_posts(case.keyword, case.platform, limit=limit)
-        _persist_collected_posts(case, raw)
-        flash(f"Re-collected {len(raw)} posts.", "success")
+        if raw:
+            _persist_collected_posts(case, raw)
+            flash(f"Re-collected {len(raw)} posts.", "success")
+        else:
+            flash("No live posts were returned, so the case was left unchanged.", "warning")
         return redirect(url_for("dashboard", case_id=case.id))
 
     # ------------------- Dashboard (multi-tab) -------------------

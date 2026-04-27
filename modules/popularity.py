@@ -59,7 +59,15 @@ def train_and_predict(posts: List) -> Dict[str, Any]:
         X_author[i, author_idx[a]] = 1.0
 
     tfidf = TfidfVectorizer(max_features=200, stop_words="english")
-    X_text = tfidf.fit_transform(texts).toarray()
+    try:
+        X_text = tfidf.fit_transform(texts).toarray()
+    except ValueError:
+        return {
+            "trained": False,
+            "reason": "Text corpus is empty after token filtering",
+            "predictions": [],
+            "metrics": {},
+        }
     scaler = StandardScaler()
     X_num = scaler.fit_transform(numeric)
     X = np.hstack([X_text, X_num, X_author])

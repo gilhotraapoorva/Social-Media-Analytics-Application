@@ -1,0 +1,67 @@
+{% extends "modules/_module_base.html" %}
+{% block title %}Sentiment Analysis — {{ case.name }}{% endblock %}
+{% block module %}
+<div class="module-header">
+  <h2><i class="bi bi-emoji-smile"></i> Module 1 — Sentiment Analysis</h2>
+  <div class="subtitle">VADER NLP-based sentiment classification with engagement-weighted alerts</div>
+</div>
+
+<div class="row">
+  <div class="col-md-3"><div class="kpi-card positive"><div class="label">Positive</div><div class="value">{{ analytics.sentiment.distribution.positive }}</div></div></div>
+  <div class="col-md-3"><div class="kpi-card"><div class="label">Neutral</div><div class="value">{{ analytics.sentiment.distribution.neutral }}</div></div></div>
+  <div class="col-md-3"><div class="kpi-card negative"><div class="label">Negative</div><div class="value">{{ analytics.sentiment.distribution.negative }}</div></div></div>
+  <div class="col-md-3"><div class="kpi-card info"><div class="label">Avg Score</div><div class="value">{{ analytics.sentiment.average_score }}</div></div></div>
+</div>
+
+<div class="row">
+  <div class="col-md-5">
+    <div class="module-card"><h5>Distribution</h5><canvas id="chart"></canvas></div>
+  </div>
+  <div class="col-md-7">
+    <div class="module-card">
+      <h5>High-Engagement Negative Alerts</h5>
+      {% if analytics.sentiment.alerts %}
+        <ul>
+          {% for a in analytics.sentiment.alerts %}
+            <li><strong>@{{ a.author }}</strong>: {{ a.text }} <small class="text-muted">(score {{ a.score }}, eng {{ a.engagement }})</small></li>
+          {% endfor %}
+        </ul>
+      {% else %}<p class="text-muted">No high-engagement negative posts.</p>{% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="module-card">
+  <h5>Per-Post Sentiment</h5>
+  <table class="table table-sm data-table">
+    <thead><tr><th>Author</th><th>Text</th><th>Label</th><th>Score</th><th>Engagement</th></tr></thead>
+    <tbody>
+      {% for d in analytics.sentiment.details %}
+        <tr><td>@{{ d.author }}</td><td class="small">{{ d.text }}</td>
+        <td><span class="alert-pill pill-{% if d.label=='positive' %}pos{% elif d.label=='negative' %}neg{% else %}neu{% endif %}">{{ d.label }}</span></td>
+        <td>{{ d.score }}</td><td>{{ d.engagement }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="module-card">
+  <h5>Insights Summary</h5>
+  <ul>
+    <li>Out of <strong>{{ analytics.sentiment.total }}</strong> posts, <strong>{{ analytics.sentiment.distribution.positive }}</strong> are positive ({{ ((analytics.sentiment.distribution.positive / analytics.sentiment.total * 100) if analytics.sentiment.total else 0) | round(1) }}%).</li>
+    <li>Average sentiment score: <strong>{{ analytics.sentiment.average_score }}</strong> (range -1 to +1).</li>
+    <li>{{ analytics.sentiment.alerts|length }} posts triggered negative-sentiment alerts (high engagement + negative tone).</li>
+  </ul>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const dist = {{ analytics.sentiment.distribution | tojson }};
+new Chart(document.getElementById('chart'), {
+  type: 'doughnut',
+  data: { labels: ['Positive','Neutral','Negative'],
+    datasets: [{ data: [dist.positive, dist.neutral, dist.negative],
+      backgroundColor: ['#198754','#6c757d','#dc3545']}]}
+});
+</script>
+{% endblock %}

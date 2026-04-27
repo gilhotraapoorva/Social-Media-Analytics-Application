@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}New Case — SocialPulse{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-8 col-lg-6">
+    <div class="module-card">
+      <h3 class="mb-1">Create Case</h3>
+      <p class="text-muted">Define a topic and SocialPulse will collect posts via Apify (or sample data when no token is configured).</p>
+      <form method="post">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Case Name <span class="text-danger">*</span></label>
+            <input class="form-control" name="name" required placeholder="e.g. Tesla Q1 Brand Sentiment">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Brand / Topic</label>
+            <input class="form-control" name="brand" placeholder="e.g. Tesla">
+          </div>
+          <div class="col-md-8">
+            <label class="form-label">Keyword <span class="text-danger">*</span></label>
+            <input class="form-control" name="keyword" required placeholder="e.g. tesla, #tsla, @elonmusk">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Platform</label>
+            <select class="form-select" name="platform">
+              <option value="twitter">X (Twitter)</option>
+              <option value="facebook">Facebook</option>
+            </select>
+          </div>
+          <div class="col-md-12">
+            <label class="form-label">Apify Source URL (optional)</label>
+            <input class="form-control" name="api_source" placeholder="https://apify.com/...">
+          </div>
+          <div class="col-md-12">
+            <label class="form-label">Post URLs / IDs (optional, one per line)</label>
+            <textarea class="form-control" name="post_urls" rows="2" placeholder="https://twitter.com/..."></textarea>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Start date</label>
+            <input class="form-control" type="date" name="start_date">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">End date</label>
+            <input class="form-control" type="date" name="end_date">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Posts to collect</label>
+            <input class="form-control" type="number" name="limit" value="100" min="10" max="500">
+          </div>
+          <div class="col-md-12">
+            <label class="form-label">Description</label>
+            <textarea class="form-control" name="description" rows="2" placeholder="Goal: Sentiment + Trend + Influencer"></textarea>
+          </div>
+        </div>
+        <div class="d-flex gap-2 mt-4">
+          <button class="btn btn-primary"><i class="bi bi-cloud-download"></i> Create &amp; Collect Data</button>
+          <a href="{{ url_for('cases') }}" class="btn btn-outline-secondary">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

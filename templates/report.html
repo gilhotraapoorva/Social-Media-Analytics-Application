@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Analytics Report — {{ case.name }}</title>
+  <style>
+    body { font-family: Helvetica, Arial, sans-serif; color: #212529; padding: 30px; }
+    h1 { color: #0d6efd; border-bottom: 3px solid #0d6efd; padding-bottom: 8px; }
+    h2 { color: #0d6efd; margin-top: 28px; border-bottom: 1px solid #dee2e6; padding-bottom: 4px; }
+    h3 { color: #495057; }
+    .meta { background: #f6f9fc; padding: 12px; border-radius: 6px; }
+    table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 11px; }
+    th, td { border: 1px solid #dee2e6; padding: 6px 8px; text-align: left; }
+    th { background: #e9ecef; }
+    .kpi { display: inline-block; width: 23%; margin: 4px 0.5%; padding: 10px;
+           background: #f1f3f5; border-radius: 6px; vertical-align: top; }
+    .kpi b { font-size: 18px; color: #0d6efd; display: block; }
+    code, pre { background: #f8f9fa; padding: 2px 6px; border-radius: 4px; font-size: 11px; }
+    pre { padding: 10px; }
+    .small { font-size: 11px; }
+  </style>
+</head>
+<body>
+
+<h1>Social Media Analytics Report</h1>
+<div class="meta">
+  <strong>Case:</strong> {{ case.name }}<br>
+  <strong>Brand / Topic:</strong> {{ case.brand or '—' }}<br>
+  <strong>Keyword:</strong> {{ case.keyword }}<br>
+  <strong>Platform:</strong> {{ case.platform }}<br>
+  <strong>API Source:</strong> {{ case.api_source or 'Apify (default actor) / Sample data fallback' }}<br>
+  <strong>Date Range:</strong> {{ case.start_date or '—' }} → {{ case.end_date or '—' }}<br>
+  <strong>Generated:</strong> {{ generated_at }}
+</div>
+
+<h2>1. Introduction</h2>
+<p>SocialPulse Analytics is an AI-powered social media intelligence platform that ingests posts
+from X (Twitter) and Facebook (via the Apify scraping API), runs twelve analytical modules
+spanning NLP, network science, and machine learning, and renders the results as interactive
+dashboards. This document is the automated report for case <strong>{{ case.name }}</strong>.</p>
+
+<h2>2. Problem Statement</h2>
+<p>Modern brands need to understand audience sentiment, identify influencers and communities,
+detect misinformation, optimize ad spend, and forecast which content will perform — all in one
+unified workspace. SocialPulse implements all twelve required analytics modules and exposes
+them through per-case dashboards and exportable reports.</p>
+
+<h2>3. Case Study Description</h2>
+<p>{{ case.description or 'Multi-dimensional analysis of social conversation around the configured keyword.' }}</p>
+<p>Posts collected: <strong>{{ case.posts|length }}</strong></p>
+
+<h2>4. System Architecture</h2>
+<ul>
+  <li><strong>Frontend:</strong> Flask templates with Bootstrap 5, Chart.js, and D3.js</li>
+  <li><strong>Backend:</strong> Python 3 + Flask + Flask-Login + Flask-SQLAlchemy</li>
+  <li><strong>Database:</strong> SQLite (zero-config; switchable to MySQL/PostgreSQL via DATABASE_URL)</li>
+  <li><strong>Data Source:</strong> Apify Twitter / Facebook actors with synthetic-data fallback</li>
+  <li><strong>NLP / ML:</strong> VADER, scikit-learn (TF-IDF, Logistic Regression, Gradient Boosting, KMeans), NetworkX</li>
+  <li><strong>Reporting:</strong> Jinja2 + xhtml2pdf for HTML/PDF export</li>
+</ul>
+
+<h2>5. Methodology</h2>
+<table>
+  <tr><th>#</th><th>Module</th><th>Method</th></tr>
+  <tr><td>1</td><td>Sentiment Analysis</td><td>VADER lexicon-based scoring; positive/neutral/negative thresholds at ±0.05</td></tr>
+  <tr><td>2</td><td>Trending Topics</td><td>Hashtag &amp; keyword frequency; trend score = freq × (1 + avg_engagement/100)</td></tr>
+  <tr><td>3</td><td>Network Analysis</td><td>Author→mention DiGraph; greedy modularity communities; eigenvector + betweenness centrality</td></tr>
+  <tr><td>4</td><td>Recommendations</td><td>TF-IDF cosine (content-based) + user×hashtag collaborative filtering</td></tr>
+  <tr><td>5</td><td>Fake News Detection</td><td>Logistic regression on TF-IDF n-grams + linguistic urgency/clickbait heuristics</td></tr>
+  <tr><td>6</td><td>User Segmentation</td><td>KMeans on standardized behavioral features (post count, engagement, hashtags)</td></tr>
+  <tr><td>7</td><td>Data Visualization</td><td>Time-bucketed engagement, reach, and sentiment series</td></tr>
+  <tr><td>8</td><td>Ad Optimization</td><td>Per-creative simulated CTR / conversion rate / ROI</td></tr>
+  <tr><td>9</td><td>Influencer Detection</td><td>Composite of eigenvector centrality, PageRank, and engagement share</td></tr>
+  <tr><td>10</td><td>Real-Time Monitoring</td><td>Hourly keyword volume + statistical anomaly detection (mean + 2σ)</td></tr>
+  <tr><td>11</td><td>Competitor Analysis</td><td>Cross-case comparison of engagement, sentiment, and hashtag strategy</td></tr>
+  <tr><td>12</td><td>Popularity Prediction</td><td>Gradient Boosting Regressor on TF-IDF + structural features; 80/20 holdout</td></tr>
+</table>
+
+<h2>6. Implementation Highlights</h2>
+<pre><code>def classify(text):
+    scores = analyzer.polarity_scores(text)
+    compound = scores["compound"]
+    if compound &gt;= 0.05: return "positive"
+    if compound &lt;= -0.05: return "negative"
+    return "neutral"</code></pre>
+<pre><code>g = nx.DiGraph()
+for post in posts:
+    for mention in post.mentions:
+        g.add_edge(post.author, mention)
+eigenvector = nx.eigenvector_centrality_numpy(g)</code></pre>
+
+<h2>7. Results &amp; Analysis</h2>
+<h3>7.1 Sentiment</h3>
+<div class="kpi"><b>{{ analytics.sentiment.distribution.positive }}</b> Positive</div>
+<div class="kpi"><b>{{ analytics.sentiment.distribution.neutral }}</b> Neutral</div>
+<div class="kpi"><b>{{ analytics.sentiment.distribution.negative }}</b> Negative</div>
+<div class="kpi"><b>{{ analytics.sentiment.average_score }}</b> Avg Score</div>
+
+<h3>7.2 Top Hashtags</h3>
+<table>
+  <tr><th>Hashtag</th><th>Count</th></tr>
+  {% for h in analytics.trends.top_hashtags[:10] %}
+    <tr><td>#{{ h.hashtag }}</td><td>{{ h.count }}</td></tr>
+  {% endfor %}
+</table>
+
+<h3>7.3 Network Metrics</h3>
+<div class="kpi"><b>{{ analytics.network.metrics.node_count }}</b> Nodes</div>
+<div class="kpi"><b>{{ analytics.network.metrics.edge_count }}</b> Edges</div>
+<div class="kpi"><b>{{ analytics.network.metrics.community_count }}</b> Communities</div>
+<div class="kpi"><b>{{ analytics.network.metrics.density }}</b> Density</div>
+
+<h3>7.4 Top 5 Influencers</h3>
+<table>
+  <tr><th>#</th><th>User</th><th>Score</th><th>Eigenvector</th><th>Engagement</th></tr>
+  {% for inf in analytics.influencer.top[:5] %}
+    <tr><td>{{ loop.index }}</td><td>@{{ inf.user }}</td><td>{{ inf.score }}</td>
+        <td>{{ inf.eigenvector }}</td><td>{{ inf.engagement }}</td></tr>
+  {% endfor %}
+</table>
+
+<h3>7.5 User Segments</h3>
+<table>
+  <tr><th>Segment</th><th>Size</th><th>Avg Likes</th><th>Avg Posts</th></tr>
+  {% for c in analytics.segmentation.clusters %}
+    <tr><td>{{ c.label }}</td><td>{{ c.size }}</td><td>{{ c.avg_likes }}</td><td>{{ c.avg_post_count }}</td></tr>
+  {% endfor %}
+</table>
+
+<h3>7.6 Fake News</h3>
+<div class="kpi"><b>{{ analytics.fake_news.real }}</b> Real</div>
+<div class="kpi"><b>{{ analytics.fake_news.fake }}</b> Fake</div>
+<div class="kpi"><b>{{ (analytics.fake_news.fake_ratio*100)|round(1) }}%</b> Fake Ratio</div>
+
+<h3>7.7 Ad Campaign Performance</h3>
+<div class="kpi"><b>{{ analytics.ad_optimization.summary.avg_ctr }}%</b> Avg CTR</div>
+<div class="kpi"><b>{{ analytics.ad_optimization.summary.avg_conversion_rate }}%</b> Avg Conv</div>
+<div class="kpi"><b>{{ analytics.ad_optimization.summary.avg_roi }}%</b> Avg ROI</div>
+
+<h3>7.8 Popularity Prediction</h3>
+{% if analytics.popularity.trained %}
+<div class="kpi"><b>{{ analytics.popularity.metrics.mae }}</b> MAE</div>
+<div class="kpi"><b>{{ analytics.popularity.metrics.r2 }}</b> R²</div>
+{% else %}<p class="small">{{ analytics.popularity.reason }}</p>{% endif %}
+
+<h2>8. Conclusion</h2>
+<p>SocialPulse Analytics demonstrates an end-to-end pipeline from data collection through
+multi-modal analytics to automated reporting. The platform delivers actionable insights —
+audience sentiment, influencer networks, content recommendations, misinformation flags,
+campaign ROI, and engagement forecasts — through a single authenticated workspace.</p>
+
+<h2>9. References</h2>
+<ul class="small">
+  <li>VADER: Hutto, C.J. &amp; Gilbert, E.E. (2014). VADER: A Parsimonious Rule-based Model for Sentiment Analysis of Social Media Text.</li>
+  <li>NetworkX: Hagberg, A. et al. (2008). Exploring network structure, dynamics, and function using NetworkX.</li>
+  <li>scikit-learn: Pedregosa et al. (2011). Scikit-learn: Machine Learning in Python.</li>
+  <li>Apify: <span>https://apify.com</span> — actors used for X (Twitter) and Facebook scraping.</li>
+  <li>Bootstrap, Chart.js, D3.js — frontend visualization libraries.</li>
+</ul>
+
+</body>
+</html>

@@ -1,0 +1,55 @@
+{% extends "modules/_module_base.html" %}
+{% block title %}Real-Time — {{ case.name }}{% endblock %}
+{% block module %}
+<div class="module-header">
+  <h2><i class="bi bi-broadcast"></i> Module 10 — Real-Time Monitoring</h2>
+  <div class="subtitle">Hourly keyword tracking with anomaly &amp; alert detection</div>
+</div>
+
+<div class="row">
+  <div class="col-md-3"><div class="kpi-card info"><div class="label">Tracked Keywords</div><div class="value">{{ analytics.realtime.keywords|length }}</div></div></div>
+  <div class="col-md-3"><div class="kpi-card warn"><div class="label">Anomaly Alerts</div><div class="value">{{ analytics.realtime.alerts|length }}</div></div></div>
+  <div class="col-md-3"><div class="kpi-card negative"><div class="label">Negative Alerts</div><div class="value">{{ analytics.negative_alerts|length }}</div></div></div>
+  <div class="col-md-3"><div class="kpi-card"><div class="label">Window</div><div class="value">{{ analytics.realtime.window_hours }}h</div></div></div>
+</div>
+
+<div class="module-card">
+  <h5>Keyword Volume Timeline</h5>
+  <canvas id="rt"></canvas>
+</div>
+
+<div class="row">
+  <div class="col-md-6"><div class="module-card">
+    <h5>Volume Anomalies</h5>
+    {% if analytics.realtime.alerts %}
+      <ul>
+        {% for a in analytics.realtime.alerts %}
+          <li><strong>#{{ a.keyword }}</strong> spiked to {{ a.count }} at {{ a.hour }} (threshold {{ a.threshold }})</li>
+        {% endfor %}
+      </ul>
+    {% else %}<p class="text-muted">No anomalies detected.</p>{% endif %}
+  </div></div>
+  <div class="col-md-6"><div class="module-card">
+    <h5>Negative Sentiment Alerts</h5>
+    {% if analytics.negative_alerts %}
+      <ul>
+        {% for a in analytics.negative_alerts %}
+          <li><strong>@{{ a.author }}</strong>: {{ a.text }} <small class="text-muted">(score {{ a.score }})</small></li>
+        {% endfor %}
+      </ul>
+    {% else %}<p class="text-muted">No negative alerts.</p>{% endif %}
+  </div></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const tl = {{ analytics.realtime.timeline | tojson }};
+const labels = Object.values(tl)[0] ? Object.values(tl)[0].map(d=>d.hour) : [];
+const datasets = Object.entries(tl).map(([kw, series], i) => ({
+  label: '#'+kw, data: series.map(d=>d.count),
+  borderColor: ['#0d6efd','#dc3545','#198754','#ffc107','#6610f2'][i%5],
+  tension: 0.3
+}));
+new Chart(document.getElementById('rt'), { type:'line', data:{labels, datasets} });
+</script>
+{% endblock %}

@@ -1,0 +1,44 @@
+{% extends "modules/_module_base.html" %}
+{% block title %}Fake News — {{ case.name }}{% endblock %}
+{% block module %}
+<div class="module-header">
+  <h2><i class="bi bi-shield-exclamation"></i> Module 5 — Fake News Detection</h2>
+  <div class="subtitle">Logistic regression (TF-IDF n-grams) blended with linguistic heuristics</div>
+</div>
+
+<div class="row">
+  <div class="col-md-3"><div class="kpi-card positive"><div class="label">Real</div><div class="value">{{ analytics.fake_news.real }}</div></div></div>
+  <div class="col-md-3"><div class="kpi-card warn"><div class="label">Fake (flagged)</div><div class="value">{{ analytics.fake_news.fake }}</div></div></div>
+  <div class="col-md-3"><div class="kpi-card info"><div class="label">Fake Ratio</div><div class="value">{{ (analytics.fake_news.fake_ratio*100) | round(1) }}%</div></div></div>
+  <div class="col-md-3"><div class="kpi-card"><div class="label">Total</div><div class="value">{{ analytics.fake_news.total }}</div></div></div>
+</div>
+
+<div class="module-card">
+  <h5>Distribution</h5>
+  <canvas id="chart"></canvas>
+</div>
+
+<div class="module-card">
+  <h5>Flagged Posts</h5>
+  {% if analytics.fake_news.flagged %}
+  <table class="table table-sm">
+    <thead><tr><th>Author</th><th>Text</th><th>Fake Probability</th></tr></thead>
+    <tbody>
+      {% for f in analytics.fake_news.flagged %}
+        <tr><td>@{{ f.author }}</td><td>{{ f.text }}</td><td><span class="alert-pill pill-fake">{{ f.fake_probability }}</span></td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<p class="text-muted">No posts flagged as fake.</p>{% endif %}
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+new Chart(document.getElementById('chart'), {
+  type: 'pie',
+  data: { labels: ['Real','Fake'],
+    datasets: [{ data: [{{ analytics.fake_news.real }}, {{ analytics.fake_news.fake }}],
+      backgroundColor: ['#198754','#ffc107'] }] }
+});
+</script>
+{% endblock %}

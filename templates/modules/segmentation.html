@@ -1,0 +1,41 @@
+{% extends "modules/_module_base.html" %}
+{% block title %}Segmentation — {{ case.name }}{% endblock %}
+{% block module %}
+<div class="module-header">
+  <h2><i class="bi bi-people"></i> Module 6 — User Segmentation</h2>
+  <div class="subtitle">KMeans clustering on user behavioral features</div>
+</div>
+
+<div class="row">
+  {% for c in analytics.segmentation.clusters %}
+  <div class="col-md-3"><div class="kpi-card">
+    <div class="label">{{ c.label }}</div>
+    <div class="value">{{ c.size }}</div>
+    <small class="text-muted">avg likes {{ c.avg_likes }} · posts {{ c.avg_post_count }}</small>
+  </div></div>
+  {% endfor %}
+</div>
+
+<div class="module-card">
+  <h5>Cluster Members</h5>
+  {% for c in analytics.segmentation.clusters %}
+    <p><strong>{{ c.label }}</strong> ({{ c.size }} users):
+      {% for m in c.members %}<span class="badge bg-primary">@{{ m }}</span> {% endfor %}
+    </p>
+  {% endfor %}
+</div>
+
+<div class="module-card">
+  <h5>Per-User Features</h5>
+  <table class="table table-sm">
+    <thead><tr><th>User</th><th>Cluster</th><th>Posts</th><th>Avg Likes</th><th>Avg Retweets</th><th>Avg Replies</th><th>Avg Hashtags</th></tr></thead>
+    <tbody>
+      {% for u in analytics.segmentation.users %}
+        <tr><td>@{{ u.user }}</td><td>{{ u.cluster }}</td><td>{{ u.post_count }}</td>
+            <td>{{ u.avg_likes }}</td><td>{{ u.avg_retweets }}</td>
+            <td>{{ u.avg_replies }}</td><td>{{ u.avg_hashtags }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

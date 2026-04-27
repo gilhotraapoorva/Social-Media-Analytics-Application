@@ -1,0 +1,66 @@
+{% extends "modules/_module_base.html" %}
+{% block title %}Ad Optimization — {{ case.name }}{% endblock %}
+{% block module %}
+<div class="module-header">
+  <h2><i class="bi bi-megaphone"></i> Module 8 — Ad Campaign Optimization</h2>
+  <div class="subtitle">CTR · Conversion Rate · ROI for top creatives</div>
+</div>
+
+{% set s = analytics.ad_optimization.summary %}
+<div class="row">
+  <div class="col-md-3"><div class="kpi-card info"><div class="label">Avg CTR</div><div class="value">{{ s.avg_ctr }}%</div></div></div>
+  <div class="col-md-3"><div class="kpi-card positive"><div class="label">Avg Conversion</div><div class="value">{{ s.avg_conversion_rate }}%</div></div></div>
+  <div class="col-md-3"><div class="kpi-card warn"><div class="label">Avg ROI</div><div class="value">{{ s.avg_roi }}%</div></div></div>
+  <div class="col-md-3"><div class="kpi-card"><div class="label">Net Revenue</div><div class="value">${{ (s.total_revenue - s.total_spend) | round(2) }}</div></div></div>
+</div>
+
+<div class="module-card">
+  <h5>Per-Campaign Performance</h5>
+  <canvas id="ads"></canvas>
+</div>
+
+<div class="module-card">
+  <h5>Best vs. Worst Campaign</h5>
+  <div class="row">
+    <div class="col-md-6">
+      <h6 class="text-success">Best (highest ROI)</h6>
+      <p><strong>{{ s.best_campaign.creative }}</strong></p>
+      <small>ROI {{ s.best_campaign.roi_pct }}% · CTR {{ s.best_campaign.ctr_pct }}% · Conv {{ s.best_campaign.conversion_rate_pct }}%</small>
+    </div>
+    <div class="col-md-6">
+      <h6 class="text-danger">Worst (lowest ROI)</h6>
+      <p><strong>{{ s.worst_campaign.creative }}</strong></p>
+      <small>ROI {{ s.worst_campaign.roi_pct }}% · CTR {{ s.worst_campaign.ctr_pct }}% · Conv {{ s.worst_campaign.conversion_rate_pct }}%</small>
+    </div>
+  </div>
+</div>
+
+<div class="module-card">
+  <h5>All Campaigns</h5>
+  <table class="table table-sm data-table">
+    <thead><tr><th>#</th><th>Creative</th><th>Impr.</th><th>Clicks</th><th>Conv.</th><th>Spend</th><th>Rev.</th><th>CTR</th><th>Conv %</th><th>ROI</th></tr></thead>
+    <tbody>
+      {% for c in analytics.ad_optimization.campaigns %}
+        <tr><td>{{ c.id }}</td><td class="small">{{ c.creative }}</td><td>{{ c.impressions }}</td>
+          <td>{{ c.clicks }}</td><td>{{ c.conversions }}</td><td>${{ c.spend_usd }}</td>
+          <td>${{ c.revenue_usd }}</td><td>{{ c.ctr_pct }}%</td><td>{{ c.conversion_rate_pct }}%</td>
+          <td><strong>{{ c.roi_pct }}%</strong></td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const ads = {{ analytics.ad_optimization.campaigns | tojson }};
+new Chart(document.getElementById('ads'), {
+  type: 'bar',
+  data: { labels: ads.map(c=>'Ad '+c.id),
+    datasets:[
+      {label:'CTR %', data: ads.map(c=>c.ctr_pct), backgroundColor:'#0dcaf0'},
+      {label:'Conv %', data: ads.map(c=>c.conversion_rate_pct), backgroundColor:'#198754'},
+      {label:'ROI %', data: ads.map(c=>c.roi_pct), backgroundColor:'#ffc107'},
+    ]}
+});
+</script>
+{% endblock %}

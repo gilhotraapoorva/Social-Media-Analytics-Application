@@ -1,0 +1,64 @@
+{% extends "modules/_module_base.html" %}
+{% block title %}Competitor — {{ case.name }}{% endblock %}
+{% block module %}
+<div class="module-header">
+  <h2><i class="bi bi-people-fill"></i> Module 11 — Competitor Analysis</h2>
+  <div class="subtitle">Compare engagement, sentiment &amp; strategy across two cases</div>
+</div>
+
+{% if not comparison %}
+<div class="module-card">
+  <h5>Pick a competitor case to compare</h5>
+  {% if other_cases %}
+  <ul class="list-group">
+    {% for c in other_cases %}
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+        <div><strong>{{ c.name }}</strong> · {{ c.keyword }} <span class="badge bg-secondary">{{ c.platform }}</span></div>
+        <a href="{{ url_for('competitor_compare', case_id=case.id, other_id=c.id) }}" class="btn btn-sm btn-primary">Compare</a>
+      </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+    <p class="text-muted">Create another case first to enable competitor analysis.</p>
+  {% endif %}
+</div>
+{% else %}
+{% set a = comparison.competitors[case.name] %}
+{% set b = comparison.competitors[other.name] %}
+<div class="row">
+  <div class="col-md-6"><div class="module-card">
+    <h5>{{ case.name }}</h5>
+    <p>Posts: <strong>{{ a.post_count }}</strong> · Engagement: <strong>{{ a.engagement }}</strong></p>
+    <p>Avg Sentiment: <strong>{{ a.average_sentiment }}</strong></p>
+    <p>Top hashtags: {% for h in a.top_hashtags %}<span class="badge bg-primary">#{{ h.hashtag }}</span> {% endfor %}</p>
+  </div></div>
+  <div class="col-md-6"><div class="module-card">
+    <h5>{{ other.name }}</h5>
+    <p>Posts: <strong>{{ b.post_count }}</strong> · Engagement: <strong>{{ b.engagement }}</strong></p>
+    <p>Avg Sentiment: <strong>{{ b.average_sentiment }}</strong></p>
+    <p>Top hashtags: {% for h in b.top_hashtags %}<span class="badge bg-info">#{{ h.hashtag }}</span> {% endfor %}</p>
+  </div></div>
+</div>
+<div class="module-card">
+  <h5>Comparative Metrics</h5>
+  <canvas id="cmp"></canvas>
+</div>
+<div class="module-card">
+  <h5>Strategy</h5>
+  <p><strong>Shared hashtags:</strong>
+    {% for s in comparison.strategy.shared_hashtags %}<span class="badge bg-secondary">#{{ s }}</span> {% endfor %}
+  </p>
+</div>
+<script>
+const a = {{ a | tojson }}, b = {{ b | tojson }};
+new Chart(document.getElementById('cmp'), {
+  type:'bar',
+  data:{ labels:['Posts','Engagement','Avg Engagement','Avg Sentiment'],
+    datasets:[
+      { label: '{{ case.name }}', data:[a.post_count, a.engagement, a.avg_engagement, a.average_sentiment], backgroundColor:'#0d6efd' },
+      { label: '{{ other.name }}', data:[b.post_count, b.engagement, b.avg_engagement, b.average_sentiment], backgroundColor:'#dc3545' },
+    ]}
+});
+</script>
+{% endif %}
+{% endblock %}

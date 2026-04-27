@@ -1,0 +1,42 @@
+{% extends "modules/_module_base.html" %}
+{% block title %}Trends — {{ case.name }}{% endblock %}
+{% block module %}
+<div class="module-header">
+  <h2><i class="bi bi-fire"></i> Module 2 — Trending Topics Detection</h2>
+  <div class="subtitle">Hashtag &amp; keyword frequency with engagement-weighted trend score</div>
+</div>
+
+<div class="row">
+  <div class="col-md-3"><div class="kpi-card info"><div class="label">Unique Hashtags</div><div class="value">{{ analytics.trends.unique_hashtags }}</div></div></div>
+  <div class="col-md-3"><div class="kpi-card info"><div class="label">Unique Keywords</div><div class="value">{{ analytics.trends.unique_keywords }}</div></div></div>
+  <div class="col-md-3"><div class="kpi-card positive"><div class="label">Top Hashtag</div><div class="value">#{{ analytics.trends.top_hashtags[0].hashtag if analytics.trends.top_hashtags else '—' }}</div></div></div>
+  <div class="col-md-3"><div class="kpi-card warn"><div class="label">Top Keyword</div><div class="value">{{ analytics.trends.top_keywords[0].keyword if analytics.trends.top_keywords else '—' }}</div></div></div>
+</div>
+
+<div class="row">
+  <div class="col-md-6"><div class="module-card"><h5>Top Hashtags</h5><canvas id="ht"></canvas></div></div>
+  <div class="col-md-6"><div class="module-card"><h5>Top Keywords</h5><canvas id="kw"></canvas></div></div>
+</div>
+
+<div class="module-card">
+  <h5>Ranked Trend Score</h5>
+  <table class="table table-sm data-table">
+    <thead><tr><th>Hashtag</th><th>Count</th><th>Avg Engagement</th><th>Trend Score</th></tr></thead>
+    <tbody>
+      {% for r in analytics.trends.ranked_trends %}
+        <tr><td>#{{ r.hashtag }}</td><td>{{ r.count }}</td><td>{{ r.avg_engagement }}</td><td><strong>{{ r.trend_score }}</strong></td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const ht = {{ analytics.trends.top_hashtags | tojson }};
+const kw = {{ analytics.trends.top_keywords | tojson }};
+new Chart(document.getElementById('ht'), { type: 'bar',
+  data: { labels: ht.map(x=>'#'+x.hashtag), datasets: [{label:'Count', data: ht.map(x=>x.count), backgroundColor:'#0d6efd'}] }});
+new Chart(document.getElementById('kw'), { type: 'bar',
+  data: { labels: kw.map(x=>x.keyword), datasets: [{label:'Count', data: kw.map(x=>x.count), backgroundColor:'#6610f2'}] }});
+</script>
+{% endblock %}

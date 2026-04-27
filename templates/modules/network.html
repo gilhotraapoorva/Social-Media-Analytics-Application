@@ -1,0 +1,76 @@
+{% extends "modules/_module_base.html" %}
+{% block title %}Network — {{ case.name }}{% endblock %}
+{% block module %}
+<div class="module-header">
+  <h2><i class="bi bi-diagram-3"></i> Module 3 — Network Analysis</h2>
+  <div class="subtitle">Author–mention graph with community detection &amp; centrality</div>
+</div>
+
+<div class="row">
+  <div class="col-md-3"><div class="kpi-card info"><div class="label">Nodes</div><div class="value">{{ analytics.network.metrics.node_count }}</div></div></div>
+  <div class="col-md-3"><div class="kpi-card info"><div class="label">Edges</div><div class="value">{{ analytics.network.metrics.edge_count }}</div></div></div>
+  <div class="col-md-3"><div class="kpi-card positive"><div class="label">Communities</div><div class="value">{{ analytics.network.metrics.community_count }}</div></div></div>
+  <div class="col-md-3"><div class="kpi-card warn"><div class="label">Density</div><div class="value">{{ analytics.network.metrics.density }}</div></div></div>
+</div>
+
+<div class="module-card">
+  <h5>Network Graph (drag &amp; explore)</h5>
+  <div id="network-graph"></div>
+</div>
+
+<div class="row">
+  <div class="col-md-6"><div class="module-card">
+    <h5>Top Influencers (Eigenvector Centrality)</h5>
+    <table class="table table-sm">
+      <thead><tr><th>User</th><th>Score</th><th>Degree</th></tr></thead>
+      <tbody>
+        {% for inf in analytics.network.influencers %}
+          <tr><td>@{{ inf.node }}</td><td>{{ inf.score }}</td><td>{{ inf.degree }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div></div>
+  <div class="col-md-6"><div class="module-card">
+    <h5>Top Connectors (Betweenness)</h5>
+    <table class="table table-sm">
+      <thead><tr><th>User</th><th>Score</th></tr></thead>
+      <tbody>
+        {% for c in analytics.network.connectors %}
+          <tr><td>@{{ c.node }}</td><td>{{ c.score }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div></div>
+</div>
+
+<div class="module-card">
+  <h5>Communities</h5>
+  {% for c in analytics.network.communities %}
+    <p class="mb-1"><strong>Community {{ c.id }}</strong> ({{ c.size }} members):
+      {% for m in c.members %}<span class="badge bg-secondary">@{{ m }}</span> {% endfor %}
+    </p>
+  {% endfor %}
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const network = {{ analytics.network | tojson }};
+const w = document.getElementById('network-graph').clientWidth || 800, h = 500;
+const svg = d3.select('#network-graph').append('svg').attr('viewBox', `0 0 ${w} ${h}`);
+const colors = d3.scaleOrdinal(d3.schemeCategory10);
+const sim = d3.forceSimulation(network.nodes)
+  .force('link', d3.forceLink(network.edges).id(d => d.id).distance(80))
+  .force('charge', d3.forceManyBody().strength(-200))
+  .force('center', d3.forceCenter(w/2, h/2));
+const link = svg.append('g').selectAll('line').data(network.edges).enter()
+  .append('line').attr('class','link').attr('stroke-width', d=>Math.sqrt(d.weight));
+const node = svg.append('g').selectAll('g').data(network.nodes).enter().append('g').attr('class','node');
+node.append('circle').attr('r', d=>5+(d.eigenvector||0)*30).attr('fill', d=>colors(d.community||0));
+node.append('title').text(d=>d.label);
+node.append('text').attr('x',8).attr('y',4).text(d=>d.label);
+sim.on('tick', () => {
+  link.attr('x1',d=>d.source.x).attr('y1',d=>d.source.y).attr('x2',d=>d.target.x).attr('y2',d=>d.target.y);
+  node.attr('transform', d=>`translate(${d.x},${d.y})`);
+});
+</script>
+{% endblock %}

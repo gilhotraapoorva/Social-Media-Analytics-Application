@@ -1,0 +1,47 @@
+{% extends "modules/_module_base.html" %}
+{% block title %}Visualization — {{ case.name }}{% endblock %}
+{% block module %}
+<div class="module-header">
+  <h2><i class="bi bi-bar-chart"></i> Module 7 — Data Visualization</h2>
+  <div class="subtitle">Engagement, reach, and sentiment over time</div>
+</div>
+
+<div class="row">
+  <div class="col-md-4"><div class="kpi-card info"><div class="label">Total Engagement</div><div class="value">{{ analytics.visualization.totals.engagement }}</div></div></div>
+  <div class="col-md-4"><div class="kpi-card positive"><div class="label">Total Reach</div><div class="value">{{ analytics.visualization.totals.reach }}</div></div></div>
+  <div class="col-md-4"><div class="kpi-card"><div class="label">Posts</div><div class="value">{{ analytics.visualization.totals.posts }}</div></div></div>
+</div>
+
+<div class="row">
+  <div class="col-lg-6"><div class="module-card"><h5>Engagement &amp; Reach</h5><canvas id="er"></canvas></div></div>
+  <div class="col-lg-6"><div class="module-card"><h5>Average Sentiment</h5><canvas id="sent"></canvas></div></div>
+</div>
+
+<div class="module-card">
+  <h5>Top Authors by Engagement</h5>
+  <canvas id="auth"></canvas>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const ts = {{ analytics.visualization.timeseries | tojson }};
+const top = {{ analytics.visualization.top_authors | tojson }};
+new Chart(document.getElementById('er'), {
+  type: 'line',
+  data: { labels: ts.labels,
+    datasets: [
+      { label:'Engagement', data: ts.engagement, borderColor:'#0d6efd', tension:0.3 },
+      { label:'Reach', data: ts.reach, borderColor:'#198754', tension:0.3, yAxisID:'y2' },
+    ]},
+  options: { scales: { y2: { position:'right', beginAtZero:true } } }
+});
+new Chart(document.getElementById('sent'), {
+  type: 'line',
+  data: { labels: ts.labels, datasets:[{label:'Avg Sentiment', data: ts.sentiment, borderColor:'#6610f2', backgroundColor:'rgba(102,16,242,0.15)', fill:true, tension:0.3 }] }
+});
+new Chart(document.getElementById('auth'), {
+  type: 'bar',
+  data: { labels: top.map(t=>'@'+t.author), datasets:[{label:'Engagement', data: top.map(t=>t.engagement), backgroundColor:'#0dcaf0'}] }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <a href="{{ url_for('dashboard', case_id=case.id) }}" class="btn btn-sm btn-outline-secondary">
+    <i class="bi bi-arrow-left"></i> Back to Dashboard
+  </a>
+  <div class="text-muted small">Case: <strong>{{ case.name }}</strong> · {{ case.posts|length }} posts</div>
+</div>
+{% block module %}{% endblock %}
+{% endblock %}

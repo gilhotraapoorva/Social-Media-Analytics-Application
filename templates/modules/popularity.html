@@ -1,0 +1,48 @@
+{% extends "modules/_module_base.html" %}
+{% block title %}Popularity Prediction — {{ case.name }}{% endblock %}
+{% block module %}
+<div class="module-header">
+  <h2><i class="bi bi-graph-up-arrow"></i> Module 12 — Popularity Prediction</h2>
+  <div class="subtitle">Gradient Boosting on TF-IDF + structural post features predicts engagement</div>
+</div>
+
+{% if analytics.popularity.trained %}
+<div class="row">
+  <div class="col-md-3"><div class="kpi-card info"><div class="label">Train Size</div><div class="value">{{ analytics.popularity.metrics.train_size }}</div></div></div>
+  <div class="col-md-3"><div class="kpi-card info"><div class="label">Test Size</div><div class="value">{{ analytics.popularity.metrics.test_size }}</div></div></div>
+  <div class="col-md-3"><div class="kpi-card warn"><div class="label">MAE</div><div class="value">{{ analytics.popularity.metrics.mae }}</div></div></div>
+  <div class="col-md-3"><div class="kpi-card positive"><div class="label">R²</div><div class="value">{{ analytics.popularity.metrics.r2 }}</div></div></div>
+</div>
+
+<div class="module-card">
+  <h5>Predicted vs. Actual Engagement</h5>
+  <canvas id="pp"></canvas>
+</div>
+
+<div class="module-card">
+  <h5>Top Predicted Posts</h5>
+  <table class="table table-sm">
+    <thead><tr><th>Author</th><th>Text</th><th>Actual</th><th>Predicted</th></tr></thead>
+    <tbody>
+      {% for r in analytics.popularity.top_predicted %}
+        <tr><td>@{{ r.author }}</td><td class="small">{{ r.text }}</td><td>{{ r.actual_engagement }}</td><td><strong>{{ r.predicted_engagement }}</strong></td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<script>
+const preds = {{ analytics.popularity.predictions | tojson }};
+const labels = preds.map((_,i)=>i+1);
+new Chart(document.getElementById('pp'), {
+  type:'scatter',
+  data: { datasets:[
+    { label:'Actual', data: preds.map((r,i)=>({x:i+1,y:r.actual_engagement})), backgroundColor:'#0d6efd' },
+    { label:'Predicted', data: preds.map((r,i)=>({x:i+1,y:r.predicted_engagement})), backgroundColor:'#dc3545' },
+  ]}
+});
+</script>
+{% else %}
+<div class="module-card"><p class="text-muted">{{ analytics.popularity.reason }}</p></div>
+{% endif %}
+{% endblock %}

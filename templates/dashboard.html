@@ -1,0 +1,291 @@
+{% extends "base.html" %}
+{% block title %}{{ case.name }} — Dashboard{% endblock %}
+{% block content %}
+<div class="module-header">
+  <div class="d-flex justify-content-between align-items-center flex-wrap">
+    <div>
+      <h2><i class="bi bi-speedometer2"></i> {{ case.name }}</h2>
+      <div class="subtitle">
+        <i class="bi bi-search"></i> {{ case.keyword }} ·
+        <i class="bi bi-globe2"></i> {{ case.platform }} ·
+        <i class="bi bi-file-earmark-text"></i> {{ case.posts|length }} posts
+      </div>
+    </div>
+    <div class="btn-group">
+      <form method="post" action="{{ url_for('refresh_case', case_id=case.id) }}" class="d-inline">
+        <button class="btn btn-light"><i class="bi bi-arrow-clockwise"></i> Refresh Data</button>
+      </form>
+      <a class="btn btn-light" href="{{ url_for('report', case_id=case.id, fmt='html') }}"><i class="bi bi-filetype-html"></i> HTML Report</a>
+      <a class="btn btn-light" href="{{ url_for('report', case_id=case.id, fmt='pdf') }}"><i class="bi bi-file-pdf"></i> PDF Report</a>
+    </div>
+  </div>
+</div>
+
+<!-- KPI Row -->
+<div class="row">
+  <div class="col-md-3"><div class="kpi-card positive"><div class="label">Positive Sentiment</div><div class="value">{{ analytics.sentiment.distribution.positive }}</div></div></div>
+  <div class="col-md-3"><div class="kpi-card negative"><div class="label">Negative Sentiment</div><div class="value">{{ analytics.sentiment.distribution.negative }}</div></div></div>
+  <div class="col-md-3"><div class="kpi-card info"><div class="label">Total Engagement</div><div class="value">{{ analytics.visualization.totals.engagement }}</div></div></div>
+  <div class="col-md-3"><div class="kpi-card warn"><div class="label">Flagged Fake Posts</div><div class="value">{{ analytics.fake_news.fake }}</div></div></div>
+</div>
+
+<!-- Multi-tab dashboard -->
+<ul class="nav nav-pills nav-fill mb-3" id="tabs" role="tablist">
+  <li class="nav-item"><a class="nav-link active" data-bs-toggle="pill" href="#tab-overview"><i class="bi bi-grid"></i> Overview</a></li>
+  <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#tab-sentiment">Sentiment</a></li>
+  <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#tab-trends">Trends</a></li>
+  <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#tab-network">Network</a></li>
+  <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#tab-ads">Ads</a></li>
+  <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#tab-prediction">Prediction</a></li>
+</ul>
+
+<div class="tab-content dashboard-tab-content">
+
+  <!-- OVERVIEW TAB -->
+  <div class="tab-pane fade show active" id="tab-overview">
+    <div class="row">
+      <div class="col-lg-6"><div class="module-card">
+        <h5><i class="bi bi-emoji-smile"></i> Sentiment Distribution</h5>
+        <canvas id="chart-sentiment"></canvas>
+      </div></div>
+      <div class="col-lg-6"><div class="module-card">
+        <h5><i class="bi bi-graph-up"></i> Engagement Over Time</h5>
+        <canvas id="chart-engagement"></canvas>
+      </div></div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-4"><div class="module-card">
+        <h6>Modules — explore in detail</h6>
+        <div class="list-group list-group-flush">
+          {% set modules = [
+            ('sentiment', 'Sentiment Analysis', 'emoji-smile'),
+            ('trends', 'Trending Topics', 'fire'),
+            ('network', 'Network Analysis', 'diagram-3'),
+            ('recommendations', 'Recommendations', 'lightbulb'),
+            ('fake_news', 'Fake News Detection', 'shield-exclamation'),
+            ('segmentation', 'User Segmentation', 'people'),
+            ('visualization', 'Data Visualization', 'bar-chart'),
+            ('ad_optimization', 'Ad Optimization', 'megaphone'),
+            ('influencer', 'Influencer Detection', 'star'),
+            ('realtime', 'Real-Time Monitoring', 'broadcast'),
+            ('competitor', 'Competitor Analysis', 'people-fill'),
+            ('popularity', 'Popularity Prediction', 'graph-up-arrow'),
+          ] %}
+          {% for slug, name, icon in modules %}
+            <a href="{{ url_for('module_view', case_id=case.id, module_name=slug) }}" class="list-group-item list-group-item-action">
+              <i class="bi bi-{{ icon }}"></i> {{ name }}
+            </a>
+          {% endfor %}
+        </div>
+      </div></div>
+
+      <div class="col-md-4"><div class="module-card">
+        <h6><i class="bi bi-star"></i> Top Influencers</h6>
+        <ol class="mb-0">
+          {% for inf in analytics.influencer.top[:5] %}
+            <li><strong>{{ inf.user }}</strong> · score {{ inf.score }} · {{ inf.engagement }} eng</li>
+          {% else %}
+            <li class="text-muted">No influencer data</li>
+          {% endfor %}
+        </ol>
+      </div></div>
+
+      <div class="col-md-4"><div class="module-card">
+        <h6><i class="bi bi-fire"></i> Top Hashtags</h6>
+        <ul class="mb-0">
+          {% for h in analytics.trends.top_hashtags[:7] %}
+            <li>#{{ h.hashtag }} <span class="text-muted">({{ h.count }})</span></li>
+          {% else %}
+            <li class="text-muted">No hashtags found</li>
+          {% endfor %}
+        </ul>
+      </div></div>
+    </div>
+
+    {% if analytics.negative_alerts %}
+    <div class="alert alert-danger">
+      <strong><i class="bi bi-exclamation-triangle"></i> {{ analytics.negative_alerts|length }} negative-sentiment alerts</strong>
+      <ul class="mb-0 mt-2">
+        {% for a in analytics.negative_alerts[:5] %}
+          <li><strong>@{{ a.author }}</strong>: {{ a.text }} (score {{ a.score }})</li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- SENTIMENT TAB -->
+  <div class="tab-pane fade" id="tab-sentiment">
+    <div class="module-card">
+      <h5>Sentiment Analysis</h5>
+      <p>Average sentiment score: <strong>{{ analytics.sentiment.average_score }}</strong></p>
+      <div class="row">
+        <div class="col-md-6"><canvas id="chart-sentiment-pie"></canvas></div>
+        <div class="col-md-6">
+          <table class="table table-sm data-table">
+            <thead><tr><th>Author</th><th>Text</th><th>Label</th><th>Score</th></tr></thead>
+            <tbody>
+              {% for d in analytics.sentiment.details[:10] %}
+                <tr>
+                  <td>@{{ d.author }}</td>
+                  <td class="small">{{ d.text }}</td>
+                  <td><span class="alert-pill pill-{% if d.label=='positive' %}pos{% elif d.label=='negative' %}neg{% else %}neu{% endif %}">{{ d.label }}</span></td>
+                  <td>{{ d.score }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TRENDS TAB -->
+  <div class="tab-pane fade" id="tab-trends">
+    <div class="module-card">
+      <h5>Top Hashtags &amp; Keywords</h5>
+      <div class="row">
+        <div class="col-md-6"><canvas id="chart-hashtags"></canvas></div>
+        <div class="col-md-6"><canvas id="chart-keywords"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NETWORK TAB -->
+  <div class="tab-pane fade" id="tab-network">
+    <div class="module-card">
+      <h5>Network Graph</h5>
+      <p class="text-muted small">{{ analytics.network.metrics.node_count }} nodes ·
+         {{ analytics.network.metrics.edge_count }} edges ·
+         {{ analytics.network.metrics.community_count }} communities</p>
+      <div id="network-graph"></div>
+    </div>
+  </div>
+
+  <!-- ADS TAB -->
+  <div class="tab-pane fade" id="tab-ads">
+    <div class="module-card">
+      <h5>Ad Campaign Optimization</h5>
+      <div class="row mb-3">
+        <div class="col-md-3"><div class="kpi-card info"><div class="label">Avg CTR</div><div class="value">{{ analytics.ad_optimization.summary.avg_ctr }}%</div></div></div>
+        <div class="col-md-3"><div class="kpi-card positive"><div class="label">Avg Conversion</div><div class="value">{{ analytics.ad_optimization.summary.avg_conversion_rate }}%</div></div></div>
+        <div class="col-md-3"><div class="kpi-card warn"><div class="label">Avg ROI</div><div class="value">{{ analytics.ad_optimization.summary.avg_roi }}%</div></div></div>
+        <div class="col-md-3"><div class="kpi-card"><div class="label">Total Spend</div><div class="value">${{ analytics.ad_optimization.summary.total_spend }}</div></div></div>
+      </div>
+      <canvas id="chart-ads"></canvas>
+    </div>
+  </div>
+
+  <!-- PREDICTION TAB -->
+  <div class="tab-pane fade" id="tab-prediction">
+    <div class="module-card">
+      <h5>Popularity Prediction</h5>
+      {% if analytics.popularity.trained %}
+      <p>MAE: <strong>{{ analytics.popularity.metrics.mae }}</strong> · R²: <strong>{{ analytics.popularity.metrics.r2 }}</strong></p>
+      <table class="table table-sm data-table">
+        <thead><tr><th>Author</th><th>Text</th><th>Actual</th><th>Predicted</th></tr></thead>
+        <tbody>
+          {% for r in analytics.popularity.top_predicted %}
+            <tr><td>@{{ r.author }}</td><td class="small">{{ r.text }}</td><td>{{ r.actual_engagement }}</td><td>{{ r.predicted_engagement }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+        <p class="text-muted">{{ analytics.popularity.reason }}</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+{% block scripts %}
+<script>
+const sentiment = {{ analytics.sentiment.distribution | tojson }};
+const ts = {{ analytics.visualization.timeseries | tojson }};
+const hashtags = {{ analytics.trends.top_hashtags | tojson }};
+const keywords = {{ analytics.trends.top_keywords | tojson }};
+const network = {{ analytics.network | tojson }};
+const ads = {{ analytics.ad_optimization.campaigns | tojson }};
+
+// Sentiment doughnut
+new Chart(document.getElementById('chart-sentiment'), {
+  type: 'doughnut',
+  data: { labels: ['Positive', 'Neutral', 'Negative'],
+    datasets: [{ data: [sentiment.positive, sentiment.neutral, sentiment.negative],
+      backgroundColor: ['#198754', '#6c757d', '#dc3545'] }] }
+});
+new Chart(document.getElementById('chart-sentiment-pie'), {
+  type: 'pie',
+  data: { labels: ['Positive', 'Neutral', 'Negative'],
+    datasets: [{ data: [sentiment.positive, sentiment.neutral, sentiment.negative],
+      backgroundColor: ['#198754', '#6c757d', '#dc3545'] }] }
+});
+
+// Engagement over time
+new Chart(document.getElementById('chart-engagement'), {
+  type: 'line',
+  data: { labels: ts.labels,
+    datasets: [
+      { label: 'Engagement', data: ts.engagement, borderColor: '#0d6efd', tension: 0.2 },
+      { label: 'Posts', data: ts.post_count, borderColor: '#6610f2', tension: 0.2 },
+    ] }
+});
+
+// Hashtags / keywords bar charts
+new Chart(document.getElementById('chart-hashtags'), {
+  type: 'bar',
+  data: { labels: hashtags.map(h => '#' + h.hashtag),
+    datasets: [{ label: 'Frequency', data: hashtags.map(h => h.count), backgroundColor: '#0d6efd' }] }
+});
+new Chart(document.getElementById('chart-keywords'), {
+  type: 'bar',
+  data: { labels: keywords.map(k => k.keyword),
+    datasets: [{ label: 'Frequency', data: keywords.map(k => k.count), backgroundColor: '#6610f2' }] }
+});
+
+// Ads chart
+new Chart(document.getElementById('chart-ads'), {
+  type: 'bar',
+  data: { labels: ads.map(c => 'Ad ' + c.id),
+    datasets: [
+      { label: 'CTR %', data: ads.map(c => c.ctr_pct), backgroundColor: '#0dcaf0' },
+      { label: 'Conv %', data: ads.map(c => c.conversion_rate_pct), backgroundColor: '#198754' },
+      { label: 'ROI %', data: ads.map(c => c.roi_pct), backgroundColor: '#ffc107' },
+    ] }
+});
+
+// D3 network graph
+function renderNetwork(network) {
+  const container = document.getElementById('network-graph');
+  if (!container || !network.nodes.length) {
+    container.innerHTML = '<p class="text-muted">No network data.</p>'; return;
+  }
+  const w = container.clientWidth || 800, h = 500;
+  const svg = d3.select(container).append('svg').attr('viewBox', `0 0 ${w} ${h}`);
+  const colors = d3.scaleOrdinal(d3.schemeCategory10);
+
+  const sim = d3.forceSimulation(network.nodes)
+    .force('link', d3.forceLink(network.edges).id(d => d.id).distance(80))
+    .force('charge', d3.forceManyBody().strength(-200))
+    .force('center', d3.forceCenter(w/2, h/2));
+
+  const link = svg.append('g').selectAll('line').data(network.edges).enter()
+    .append('line').attr('class', 'link').attr('stroke-width', d => Math.sqrt(d.weight));
+
+  const node = svg.append('g').selectAll('g').data(network.nodes).enter().append('g').attr('class', 'node');
+  node.append('circle')
+    .attr('r', d => 5 + (d.eigenvector || 0) * 30)
+    .attr('fill', d => colors(d.community || 0));
+  node.append('title').text(d => d.label + ' (eigenvector: ' + d.eigenvector + ')');
+  node.append('text').attr('x', 8).attr('y', 4).text(d => d.label);
+
+  sim.on('tick', () => {
+    link.attr('x1', d => d.source.x).attr('y1', d => d.source.y)
+        .attr('x2', d => d.target.x).attr('y2', d => d.target.y);
+    node.attr('transform', d => `translate(${d.x},${d.y})`);
+  });
+}
+renderNetwork(network);
+</script>
+{% endblock %}

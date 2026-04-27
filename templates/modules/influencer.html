@@ -1,0 +1,29 @@
+{% extends "modules/_module_base.html" %}
+{% block title %}Influencers — {{ case.name }}{% endblock %}
+{% block module %}
+<div class="module-header">
+  <h2><i class="bi bi-star"></i> Module 9 — Influencer Detection</h2>
+  <div class="subtitle">Eigenvector centrality + PageRank + engagement (composite score)</div>
+</div>
+
+<div class="row">
+  <div class="col-md-3"><div class="kpi-card info"><div class="label">Users</div><div class="value">{{ analytics.influencer.metrics.user_count }}</div></div></div>
+  <div class="col-md-3"><div class="kpi-card info"><div class="label">Edges</div><div class="value">{{ analytics.influencer.metrics.edge_count }}</div></div></div>
+  <div class="col-md-3"><div class="kpi-card positive"><div class="label">Top Influencer</div><div class="value">@{{ analytics.influencer.top[0].user if analytics.influencer.top else '—' }}</div></div></div>
+</div>
+
+<div class="module-card">
+  <h5>Top 10 Influencers</h5>
+  <table class="table table-sm">
+    <thead><tr><th>#</th><th>User</th><th>Composite Score</th><th>Eigenvector</th><th>PageRank</th><th>In-Degree</th><th>Engagement</th><th>Posts</th></tr></thead>
+    <tbody>
+      {% for inf in analytics.influencer.top %}
+        <tr><td>{{ loop.index }}</td><td>@{{ inf.user }}</td>
+          <td><strong>{{ inf.score }}</strong></td><td>{{ inf.eigenvector }}</td>
+          <td>{{ inf.pagerank }}</td><td>{{ inf.in_degree }}</td>
+          <td>{{ inf.engagement }}</td><td>{{ inf.posts }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
